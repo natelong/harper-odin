@@ -2,10 +2,12 @@ package harper_c
 
 import "core:c"
 
+HARPER_LIB_PATH :: #config(HARPER_LIB_PATH, "../../target/release/libharper_c.a")
+
 when ODIN_OS == .Darwin {
-	foreign import harper_lib { "system:libharper_c.a", "system:pthread" }
+	foreign import harper_lib { HARPER_LIB_PATH, "system:pthread" }
 } else {
-	foreign import harper_lib { "system:libharper_c.a", "system:pthread", "system:dl", "system:m" }
+	foreign import harper_lib { HARPER_LIB_PATH, "system:pthread", "system:dl", "system:m" }
 }
 
 C_ABI_VERSION :: 1
