@@ -458,6 +458,8 @@ harper-odin-<target>-<version>/
 │   └── harper/
 │       └── harper.odin
 ├── LICENSE
+├── LICENSE-APACHE
+├── NOTICE
 ├── README.md
 └── checksums.txt
 ```
@@ -492,4 +494,6 @@ To use `harper-odin` in a downstream project without a Rust toolchain:
 
 ## License
 
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the full license text.
+`harper-odin` is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.
+
+The precompiled binary libraries and release distributions bundle components from the upstream [Harper](https://github.com/Automattic/harper) project (`harper-core`), which is licensed under the **Apache License, Version 2.0** by Automattic Inc. See [LICENSE-APACHE](LICENSE-APACHE) and [NOTICE](NOTICE) for the full license text, copyright notices, and disclaimers.

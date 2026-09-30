@@ -88,10 +88,12 @@ jobs:
           cp include/harper_c.h "${ARCHIVE_DIR}/include/"
           cp -r odin/* "${ARCHIVE_DIR}/odin/"
 
-          # Ensure LICENSE and README.md are gracefully included
-          if [ -f "LICENSE" ]; then
-            cp LICENSE "${ARCHIVE_DIR}/"
-          fi
+          # Ensure LICENSE, LICENSE-APACHE, NOTICE, and README.md are included
+          for f in LICENSE LICENSE-APACHE NOTICE; do
+            if [ -f "$f" ]; then
+              cp "$f" "${ARCHIVE_DIR}/"
+            fi
+          done
           if [ -f "README.md" ]; then
             cp README.md "${ARCHIVE_DIR}/"
           elif [ -f "readme.md" ]; then
