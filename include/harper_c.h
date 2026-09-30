@@ -75,7 +75,7 @@ typedef struct Harper_Lint_Result {
 } Harper_Lint_Result;
 
 /* Opaque instance handle */
-typedef struct Harper_State Harper_Handle;
+typedef struct Harper_State *Harper_Handle;
 
 /* Initialize a new checker instance with embedded curated dictionary. */
 Harper_Handle harper_new(uint32_t dialect);
