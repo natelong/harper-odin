@@ -131,6 +131,3 @@ destroy :: proc(handle: Handle) {
 	harper_c.harper_destroy(handle)
 }
 
-// Empty entry point procedure allowing `odin check odin/harper` to succeed directly.
-@(private)
-main :: proc() {}
