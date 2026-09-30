@@ -38,7 +38,7 @@ Production-grade C-ABI static and dynamic library and native Odin package wrappi
 
 **harper-odin** exposes the high-performance offline grammar and spell checking engine of `harper-core` to Odin programs and C-ABI consumers.
 
-Modern software editors, word processors, and command-line tools require responsive grammar and spell checking that functions fully offline, respects user privacy, and does not require complex runtime dependencies. While `harper-core` is implemented in Rust, many native applications (such as the [Maxwell](https://github.com/oxke/maxwell) text editor) are built in languages like Odin or C/C++.
+Modern software editors, word processors, and command-line tools require responsive grammar and spell checking that functions fully offline, respects user privacy, and does not require complex runtime dependencies. While `harper-core` is implemented in Rust, many native applications are built in languages like Odin or C/C++.
 
 `harper-odin` bridges this gap by providing:
 1. A clean, panic-safe C-ABI static (`libharper_c.a`) and dynamic (`libharper_c.dylib` / `.so`) library.
