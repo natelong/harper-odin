@@ -65,7 +65,7 @@ description = "C-ABI and Odin bindings for the Harper grammar checker"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [dependencies]
-harper-core = { version = "2.11.0", default-features = false, features = ["concurrent", "std"] }
+harper-core = { version = "2.11.0", default-features = false, features = ["concurrent"] }
 
 [profile.release]
 opt-level = 3
