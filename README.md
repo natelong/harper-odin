@@ -41,7 +41,7 @@ Production-grade C-ABI static and dynamic library and native Odin package wrappi
 Modern software editors, word processors, and command-line tools require responsive grammar and spell checking that functions fully offline, respects user privacy, and does not require complex runtime dependencies. While `harper-core` is implemented in Rust, many native applications are built in languages like Odin or C/C++.
 
 `harper-odin` bridges this gap by providing:
-1. A clean, panic-safe C-ABI static (`libharper_c.a`) and dynamic (`libharper_c.dylib` / `.so`) library.
+1. A clean, panic-safe C-ABI static (`libharper_c.a` / `harper_c.lib`) and dynamic (`libharper_c.dylib` / `.so` / `harper_c.dll`) library.
 2. A canonical C header (`include/harper_c.h`).
 3. An idiomatic, native Odin package (`odin/harper`) and low-level foreign bindings (`odin/c`).
 4. Precompiled multi-platform binary releases with checksums, eliminating the need for consumers to install Rust or Cargo.
@@ -54,8 +54,8 @@ Modern software editors, word processors, and command-line tools require respons
 
 Downstream consumers should not be forced to install the Rust toolchain, configure Cargo, or compile Rust source dependencies during their build processes.
 
-- Every tagged release publishes precompiled binary archives containing static and dynamic libraries for supported platforms (macOS Apple Silicon, macOS Intel, and Linux x86_64).
-- Odin consumers drop the `odin/` package into their project (or link via collection) and point to the precompiled `libharper_c.a`.
+- Every tagged release publishes precompiled binary archives containing static and dynamic libraries for supported platforms (macOS Apple Silicon, macOS Intel, Linux x86_64, and Windows x86_64).
+- Odin consumers drop the `odin/` package into their project (or link via collection) and point to the precompiled `libharper_c.a` (or `harper_c.lib`).
 - The build process for consumers remains 100% pure Odin.
 
 ### Strict FFI Invariants
@@ -381,12 +381,16 @@ main :: proc() {
 
 ### Configuring the Library Path
 
-The Odin bindings link against `libharper_c.a`. By default, `odin/c/harper_c.odin` looks for the compiled static library at `../../target/release/libharper_c.a`.
+The Odin bindings link against `libharper_c.a` (macOS/Linux) or `harper_c.lib` (Windows). By default, `odin/c/harper_c.odin` looks for the compiled static library at `../../target/release/libharper_c.a` (macOS/Linux) or `../../target/release/harper_c.lib` (Windows).
 
 You can override the static library path at compile time using the `-define:HARPER_LIB_PATH` compiler flag:
 
 ```bash
+# macOS / Linux
 odin build . -define:HARPER_LIB_PATH=/path/to/libharper_c.a
+
+# Windows
+odin build . -define:HARPER_LIB_PATH=C:/path/to/harper_c.lib
 ```
 
 ---
@@ -407,8 +411,8 @@ cargo build --release
 ```
 
 This generates:
-- `target/release/libharper_c.a` (Static library)
-- `target/release/libharper_c.dylib` (macOS shared library) or `libharper_c.so` (Linux shared library)
+- `target/release/libharper_c.a` (macOS/Linux static library) or `harper_c.lib` (Windows MSVC static library)
+- `target/release/libharper_c.dylib` (macOS), `libharper_c.so` (Linux), or `harper_c.dll` / `harper_c.dll.lib` (Windows)
 
 ### Running the Test Suites
 
@@ -443,13 +447,14 @@ Supported targets:
 - `aarch64-apple-darwin` (Apple Silicon macOS)
 - `x86_64-apple-darwin` (Intel macOS)
 - `x86_64-unknown-linux-gnu` (Linux x86_64)
+- `x86_64-pc-windows-msvc` (Windows x86_64 MSVC)
 
 Each tarball contains:
 ```
 harper-odin-<target>-<version>/
 ├── lib/
-│   ├── libharper_c.a
-│   └── libharper_c.dylib (or .so)
+│   ├── libharper_c.a (or harper_c.lib on Windows)
+│   └── libharper_c.dylib (or .so / harper_c.dll)
 ├── include/
 │   └── harper_c.h
 ├── odin/

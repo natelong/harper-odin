@@ -2,10 +2,25 @@ package harper_c
 
 import "core:c"
 
-HARPER_LIB_PATH :: #config(HARPER_LIB_PATH, "../../target/release/libharper_c.a")
+when ODIN_OS == .Windows {
+	DEFAULT_LIB_PATH :: "../../target/release/harper_c.lib"
+} else {
+	DEFAULT_LIB_PATH :: "../../target/release/libharper_c.a"
+}
+
+HARPER_LIB_PATH :: #config(HARPER_LIB_PATH, DEFAULT_LIB_PATH)
 
 when ODIN_OS == .Darwin {
 	foreign import harper_lib { HARPER_LIB_PATH, "system:pthread" }
+} else when ODIN_OS == .Windows {
+	foreign import harper_lib {
+		HARPER_LIB_PATH,
+		"system:userenv",
+		"system:bcrypt",
+		"system:ws2_32",
+		"system:advapi32",
+		"system:ntdll",
+	}
 } else {
 	foreign import harper_lib { HARPER_LIB_PATH, "system:pthread", "system:dl", "system:m" }
 }

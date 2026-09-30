@@ -10,11 +10,27 @@ extern "C" {
 
 #define HARPER_C_ABI_VERSION 1
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+  #if defined(HARPER_BUILD_DLL)
+    #define HARPER_API __declspec(dllexport)
+  #elif defined(HARPER_USE_DLL)
+    #define HARPER_API __declspec(dllimport)
+  #else
+    #define HARPER_API
+  #endif
+#else
+  #if defined(__GNUC__) && __GNUC__ >= 4
+    #define HARPER_API __attribute__((visibility("default")))
+  #else
+    #define HARPER_API
+  #endif
+#endif
+
 /* Reports the pinned harper-core version (e.g. "2.11.0"). */
-const char *harper_version(void);
+HARPER_API const char *harper_version(void);
 
 /* Reports the C-ABI wrapper version (e.g. 1). */
-uint32_t harper_abi_version(void);
+HARPER_API uint32_t harper_abi_version(void);
 
 /* Supported language dialects. */
 enum Harper_Dialect {
@@ -78,20 +94,20 @@ typedef struct Harper_Lint_Result {
 typedef struct Harper_State *Harper_Handle;
 
 /* Initialize a new checker instance with embedded curated dictionary. */
-Harper_Handle harper_new(uint32_t dialect);
+HARPER_API Harper_Handle harper_new(uint32_t dialect);
 
 /* Destroy checker instance and reclaim dictionary resources. */
-void harper_destroy(Harper_Handle handle);
+HARPER_API void harper_destroy(Harper_Handle handle);
 
 /* Run lint checks. Returns 0 on success, negative error code on failure. */
-int32_t harper_lint(Harper_Handle handle, const uint8_t *text, size_t len,
-                    Harper_Lint_Result *out);
+HARPER_API int32_t harper_lint(Harper_Handle handle, const uint8_t *text, size_t len,
+                               Harper_Lint_Result *out);
 
 /* Free the entire result block, including all lint structs and strings. */
-void harper_result_free(Harper_Lint_Result result);
+HARPER_API void harper_result_free(Harper_Lint_Result result);
 
 /* Retrieve thread-local error details if an FFI call returns an error. */
-const char *harper_last_error(void);
+HARPER_API const char *harper_last_error(void);
 
 #ifdef __cplusplus
 }

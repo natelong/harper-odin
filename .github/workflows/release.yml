@@ -24,6 +24,9 @@ jobs:
   build:
     name: Build (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -31,12 +34,19 @@ jobs:
           - os: macos-14
             target: aarch64-apple-darwin
             lib_ext: dylib
+            lib_static: libharper_c.a
           - os: macos-13
             target: x86_64-apple-darwin
             lib_ext: dylib
+            lib_static: libharper_c.a
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             lib_ext: so
+            lib_static: libharper_c.a
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            lib_ext: dll
+            lib_static: harper_c.lib
 
     steps:
       - name: Checkout repository
@@ -76,13 +86,23 @@ jobs:
 
           # Locate compiled release library artifacts
           BUILD_DIR="target/${TARGET}/release"
-          if [ ! -f "${BUILD_DIR}/libharper_c.a" ]; then
+          if [ ! -d "${BUILD_DIR}" ]; then
             BUILD_DIR="target/release"
           fi
 
           # Copy static and dynamic libraries
-          cp "${BUILD_DIR}/libharper_c.a" "${ARCHIVE_DIR}/lib/"
-          cp "${BUILD_DIR}/libharper_c.${{ matrix.lib_ext }}" "${ARCHIVE_DIR}/lib/"
+          if [ -f "${BUILD_DIR}/${{ matrix.lib_static }}" ]; then
+            cp "${BUILD_DIR}/${{ matrix.lib_static }}" "${ARCHIVE_DIR}/lib/"
+          fi
+          if [ -f "${BUILD_DIR}/libharper_c.${{ matrix.lib_ext }}" ]; then
+            cp "${BUILD_DIR}/libharper_c.${{ matrix.lib_ext }}" "${ARCHIVE_DIR}/lib/"
+          elif [ -f "${BUILD_DIR}/harper_c.${{ matrix.lib_ext }}" ]; then
+            cp "${BUILD_DIR}/harper_c.${{ matrix.lib_ext }}" "${ARCHIVE_DIR}/lib/"
+          fi
+          # Also copy Windows import library if present (e.g. harper_c.dll.lib)
+          if [ -f "${BUILD_DIR}/harper_c.dll.lib" ]; then
+            cp "${BUILD_DIR}/harper_c.dll.lib" "${ARCHIVE_DIR}/lib/"
+          fi
 
           # Copy C header and Odin package sources
           cp include/harper_c.h "${ARCHIVE_DIR}/include/"
