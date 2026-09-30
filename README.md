@@ -1,7 +1,7 @@
 # harper-odin
 
 [![Test](https://github.com/natelong/harper-odin/actions/workflows/test.yml/badge.svg)](https://github.com/natelong/harper-odin/actions/workflows/test.yml)
-[![Release](https://github.com/natelong/harper-odin/actions/workflows/release.yml/badge.svg)](https://github.com/oxke/harper-odin/actions/workflows/release.yml)
+[![Release](https://github.com/natelong/harper-odin/actions/workflows/release.yml/badge.svg)](https://github.com/natelong/harper-odin/actions/workflows/release.yml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Production-grade C-ABI static and dynamic library and native Odin package wrapping [Harper](https://github.com/Automattic/harper) (`harper-core` v2.11.0) for offline, deterministic grammar and spelling linting with zero panics and UTF-8 byte offset guarantees.

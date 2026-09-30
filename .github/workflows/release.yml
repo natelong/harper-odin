@@ -4,13 +4,25 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish release assets to GitHub Releases'
+        required: false
+        type: boolean
+        default: false
+      tag_name:
+        description: 'Release tag name (e.g. v0.1.0; required if publish_release is true)'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
 
 jobs:
-  release:
-    name: Release (${{ matrix.target }})
+  build:
+    name: Build (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -41,23 +53,31 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: Compile release artifacts
-        run: cargo build --release
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Package release tarball
         run: |
-          VERSION="${GITHUB_REF_NAME}"
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            VERSION="${{ github.event.inputs.tag_name }}"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="${GITHUB_SHA::7}"
+          fi
+
           TARGET="${{ matrix.target }}"
           ARCHIVE_DIR="harper-odin-${TARGET}-${VERSION}"
           ARCHIVE_NAME="harper-odin-${TARGET}-${VERSION}.tar.gz"
 
+          rm -rf "${ARCHIVE_DIR}" "${ARCHIVE_NAME}"
           mkdir -p "${ARCHIVE_DIR}/lib"
           mkdir -p "${ARCHIVE_DIR}/include"
           mkdir -p "${ARCHIVE_DIR}/odin"
 
           # Locate compiled release library artifacts
-          BUILD_DIR="target/release"
+          BUILD_DIR="target/${TARGET}/release"
           if [ ! -f "${BUILD_DIR}/libharper_c.a" ]; then
-            BUILD_DIR="target/${TARGET}/release"
+            BUILD_DIR="target/release"
           fi
 
           # Copy static and dynamic libraries
@@ -69,43 +89,92 @@ jobs:
           cp -r odin/* "${ARCHIVE_DIR}/odin/"
 
           # Ensure LICENSE and README.md are gracefully included
-          for f in LICENSE README.md; do
-            if [ -f "$f" ]; then
-              cp "$f" "${ARCHIVE_DIR}/"
-            else
-              touch "${ARCHIVE_DIR}/$f"
-            fi
-          done
+          if [ -f "LICENSE" ]; then
+            cp LICENSE "${ARCHIVE_DIR}/"
+          fi
+          if [ -f "README.md" ]; then
+            cp README.md "${ARCHIVE_DIR}/"
+          elif [ -f "readme.md" ]; then
+            cp readme.md "${ARCHIVE_DIR}/README.md"
+          fi
 
-          # Generate checksums.txt inside the archive
+          # Generate internal checksums manifest inside the archive
           if command -v sha256sum >/dev/null 2>&1; then
             (cd "${ARCHIVE_DIR}" && find * -type f ! -name "checksums.txt" | sort | xargs sha256sum > checksums.txt)
           else
             (cd "${ARCHIVE_DIR}" && find * -type f ! -name "checksums.txt" | sort | xargs shasum -a 256 > checksums.txt)
           fi
 
-          # Package release tarball
-          tar -czvf "${ARCHIVE_NAME}" -C "${ARCHIVE_DIR}" lib include odin LICENSE README.md checksums.txt
+          # Package release tarball preserving root folder for downstream extraction
+          tar -czvf "${ARCHIVE_NAME}" "${ARCHIVE_DIR}"
+
+          # Generate standalone SHA-256 checksum for this tarball
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
+          else
+            shasum -a 256 "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
+          fi
 
           echo "ARCHIVE_NAME=${ARCHIVE_NAME}" >> $GITHUB_ENV
 
-      - name: Generate SHA-256 checksums
-        run: |
-          if command -v sha256sum >/dev/null 2>&1; then
-            sha256sum "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
-            sha256sum "${ARCHIVE_NAME}" > checksums.txt
-          else
-            shasum -a 256 "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
-            shasum -a 256 "${ARCHIVE_NAME}" > checksums.txt
-          fi
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
         with:
-          files: |
+          name: artifacts-${{ matrix.target }}
+          path: |
             ${{ env.ARCHIVE_NAME }}
             ${{ env.ARCHIVE_NAME }}.sha256
-            checksums.txt
+          if-no-files-found: error
+
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish_release == 'true'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: artifacts-*
+          merge-multiple: true
+
+      - name: Generate consolidated checksums
+        run: |
+          cd dist
+          echo "Downloaded release artifacts:"
+          ls -la
+          # Generate combined checksum manifest for all packaged tarballs
+          sha256sum harper-odin-*.tar.gz > checksums.txt
+          echo "Consolidated checksums.txt:"
+          cat checksums.txt
+
+      - name: Determine release tag
+        id: release_info
+        run: |
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v${GITHUB_SHA::7}"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Upload release assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          files: |
+            dist/harper-odin-*.tar.gz
+            dist/harper-odin-*.tar.gz.sha256
+            dist/checksums.txt
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
