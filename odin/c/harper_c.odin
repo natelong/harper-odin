@@ -15,11 +15,11 @@ when ODIN_OS == .Darwin {
 } else when ODIN_OS == .Windows {
 	foreign import harper_lib {
 		HARPER_LIB_PATH,
-		"system:userenv",
-		"system:bcrypt",
-		"system:ws2_32",
-		"system:advapi32",
-		"system:ntdll",
+		"system:userenv.lib",
+		"system:bcrypt.lib",
+		"system:ws2_32.lib",
+		"system:advapi32.lib",
+		"system:ntdll.lib",
 	}
 } else {
 	foreign import harper_lib { HARPER_LIB_PATH, "system:pthread", "system:dl", "system:m" }
