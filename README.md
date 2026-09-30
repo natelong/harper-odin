@@ -52,7 +52,7 @@ Modern software editors, word processors, and command-line tools require respons
 
 ### Zero Rust Toolchain Requirement
 
-Downstream consumers (such as the Maxwell editor or third-party Odin applications) should not be forced to install the Rust toolchain, configure Cargo, or compile Rust source dependencies during their build processes.
+Downstream consumers should not be forced to install the Rust toolchain, configure Cargo, or compile Rust source dependencies during their build processes.
 
 - Every tagged release publishes precompiled binary archives containing static and dynamic libraries for supported platforms (macOS Apple Silicon, macOS Intel, and Linux x86_64).
 - Odin consumers drop the `odin/` package into their project (or link via collection) and point to the precompiled `libharper_c.a`.
@@ -466,7 +466,7 @@ Each release also publishes an accompanying SHA-256 checksum file (`harper-odin-
 
 ### Integrating into Downstream Projects
 
-To use `harper-odin` in a downstream project (such as the Maxwell editor) without a Rust toolchain:
+To use `harper-odin` in a downstream project without a Rust toolchain:
 
 1. **Download Precompiled Archive**:
    Download the appropriate release tarball for your platform from GitHub Releases and extract it into your project's vendor directory (e.g., `vendor/harper/`):
