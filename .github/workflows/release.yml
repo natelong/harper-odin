@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+            lib_ext: dylib
+          - os: macos-13
+            target: x86_64-apple-darwin
+            lib_ext: dylib
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            lib_ext: so
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Compile release artifacts
+        run: cargo build --release
+
+      - name: Package release tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          TARGET="${{ matrix.target }}"
+          ARCHIVE_DIR="harper-odin-${TARGET}-${VERSION}"
+          ARCHIVE_NAME="harper-odin-${TARGET}-${VERSION}.tar.gz"
+
+          mkdir -p "${ARCHIVE_DIR}/lib"
+          mkdir -p "${ARCHIVE_DIR}/include"
+          mkdir -p "${ARCHIVE_DIR}/odin"
+
+          # Locate compiled release library artifacts
+          BUILD_DIR="target/release"
+          if [ ! -f "${BUILD_DIR}/libharper_c.a" ]; then
+            BUILD_DIR="target/${TARGET}/release"
+          fi
+
+          # Copy static and dynamic libraries
+          cp "${BUILD_DIR}/libharper_c.a" "${ARCHIVE_DIR}/lib/"
+          cp "${BUILD_DIR}/libharper_c.${{ matrix.lib_ext }}" "${ARCHIVE_DIR}/lib/"
+
+          # Copy C header and Odin package sources
+          cp include/harper_c.h "${ARCHIVE_DIR}/include/"
+          cp -r odin/* "${ARCHIVE_DIR}/odin/"
+
+          # Ensure LICENSE and README.md are gracefully included
+          for f in LICENSE README.md; do
+            if [ -f "$f" ]; then
+              cp "$f" "${ARCHIVE_DIR}/"
+            else
+              touch "${ARCHIVE_DIR}/$f"
+            fi
+          done
+
+          # Generate checksums.txt inside the archive
+          if command -v sha256sum >/dev/null 2>&1; then
+            (cd "${ARCHIVE_DIR}" && find * -type f ! -name "checksums.txt" | sort | xargs sha256sum > checksums.txt)
+          else
+            (cd "${ARCHIVE_DIR}" && find * -type f ! -name "checksums.txt" | sort | xargs shasum -a 256 > checksums.txt)
+          fi
+
+          # Package release tarball
+          tar -czvf "${ARCHIVE_NAME}" -C "${ARCHIVE_DIR}" lib include odin LICENSE README.md checksums.txt
+
+          echo "ARCHIVE_NAME=${ARCHIVE_NAME}" >> $GITHUB_ENV
+
+      - name: Generate SHA-256 checksums
+        run: |
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
+            sha256sum "${ARCHIVE_NAME}" > checksums.txt
+          else
+            shasum -a 256 "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
+            shasum -a 256 "${ARCHIVE_NAME}" > checksums.txt
+          fi
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: |
+            ${{ env.ARCHIVE_NAME }}
+            ${{ env.ARCHIVE_NAME }}.sha256
+            checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
