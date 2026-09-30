@@ -3,7 +3,7 @@ name = "harper_c"
 version = "0.1.0"
 edition = "2021"
 authors = ["Maxwell Authors"]
-license = "Apache-2.0"
+license = "MIT"
 description = "C-ABI and Odin bindings for the Harper grammar checker"
 
 [lib]

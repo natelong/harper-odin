@@ -2,7 +2,7 @@
 
 [![Test](https://github.com/oxke/harper-odin/actions/workflows/test.yml/badge.svg)](https://github.com/oxke/harper-odin/actions/workflows/test.yml)
 [![Release](https://github.com/oxke/harper-odin/actions/workflows/release.yml/badge.svg)](https://github.com/oxke/harper-odin/actions/workflows/release.yml)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Production-grade C-ABI static and dynamic library and native Odin package wrapping [Harper](https://github.com/Automattic/harper) (`harper-core` v2.11.0) for offline, deterministic grammar and spelling linting with zero panics and UTF-8 byte offset guarantees.
 
@@ -79,7 +79,7 @@ Crossing the language barrier between Rust and Odin/C introduces potential pitfa
 harper-odin/
 ├── Cargo.toml                      # Rust crate definition (staticlib, cdylib, rlib)
 ├── Cargo.lock                      # Pinned Rust dependencies
-├── LICENSE                         # Apache-2.0 License
+├── LICENSE                         # MIT License
 ├── README.md                       # Repository documentation & guide
 ├── include/
 │   └── harper_c.h                  # Canonical C-ABI header file
@@ -492,4 +492,4 @@ To use `harper-odin` in a downstream project (such as the Maxwell editor) withou
 
 ## License
 
-This project is licensed under the **Apache License, Version 2.0**. See the [LICENSE](LICENSE) file for the full license text.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the full license text.
